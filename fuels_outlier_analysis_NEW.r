@@ -43,6 +43,17 @@ standardize_names <- function(df) {
 # ==============================================================================
 # 3. DATA PREPARATION: SHAPEFILES & METADATA
 # ==============================================================================
+
+comuni_coords <- read_csv("https://raw.githubusercontent.com/opendatasicilia/comuni-italiani/refs/heads/main/dati/coordinate.csv")
+comuni_coords <- comuni_coords %>%   
+  mutate(
+    PRO_COM_T = str_pad(as.character(pro_com_t), width = 6, side = "left", pad = "0")
+  ) %>% 
+  select(-pro_com_t)
+
+df_coords <- df_geom %>% 
+  left_join(comuni_coords)
+
 shape_names <- c("NUTS0", "NUTS1", "NUTS2", "NUTS3")
 shapes_df_list <- lapply(nuts_shp_files, function(x) st_read(x, quiet = TRUE))
 names(shapes_df_list) <- shape_names
@@ -209,11 +220,11 @@ plot_map <- ggplot() +
   labs(
     title = "Spatial Distribution of Outliers",
     color = "Outlier Label"
-  )
+  ) +
+  facet_wrap(~label)
 
 
 print(plot_map)
-
 
 
 # 1. Prepare the spatial data properly (DO NOT drop geometry)
@@ -239,6 +250,29 @@ tm_shape(map_points) +
     title = "Outlier Label",
     popup.vars = c("Municipality" = "comune.x", "Region" = "NUTS2_Name")
   )
+
+
+tm_shape(map_points %>% filter(label %in% c("Volatile", "Flat"))) +
+  tm_dots(
+    col = "label", 
+    palette = label_colors, 
+    size = 0.5, 
+    alpha = 0.8,
+    title = "Outlier Label",
+    popup.vars = c("Municipality" = "comune.x", "Region" = "NUTS2_Name")
+  )
+
+tm_shape(map_points %>% filter(label %in% c("High", "Low")) ) +
+  tm_dots(
+    col = "label", 
+    palette = label_colors, 
+    size = 0.5, 
+    alpha = 0.8,
+    title = "Outlier Label",
+    popup.vars = c("Municipality" = "comune.x", "Region" = "NUTS2_Name")
+  )
+
+
 
 
 
@@ -275,13 +309,13 @@ ggplot(summarized_data_nuts1, aes(x = NUTS1_Name, y = n, fill = label)) +
   geom_col() +
   scale_fill_manual(values = label_colors) +
   theme_minimal()  +
-  labs(title = "Territorial composition of outlier municipalities (count, NUTS 1)", y = "# Municipalities", x = "Area")
+  labs(title = "Regional composition of outlier municipalities (count, NUTS 1)", y = "# Municipalities", x = "Region")
 
 ggplot(summarized_data_nuts1, aes(x = NUTS1_Name, y = prop, fill = label)) + 
   geom_col() +
   scale_fill_manual(values = label_colors) +
   theme_minimal() +
-  labs(title = "Territorial composition of outlier municipalities (proportion, NUTS 1)", y = "# Municipalities", x = "Area")
+  labs(title = "Regional composition of outlier municipalities (proportion, NUTS 1)", y = "% Municipalities", x = "Region")
 
 # Summarize data by NUTS2
 summarized_data_nuts2 <- map_data %>% 
@@ -297,11 +331,11 @@ ggplot(summarized_data_nuts2, aes(x = NUTS2_Name, y = n, fill = label)) +
   scale_fill_manual(values = label_colors) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(title = "Territorial composition of outlier municipalities (proportion, NUTS 2)", y = "# Municipalities", x = "Region")
+  labs(title = "Regional composition of outlier municipalities (count, NUTS 2)", y = "# Municipalities", x = "Region")
 
 ggplot(summarized_data_nuts2, aes(x = NUTS2_Name, y = prop, fill = label)) +
   geom_col() + 
   scale_fill_manual(values = label_colors) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))  +
-  labs(title = "Territorial composition of outlier municipalities (proportion, NUTS 2)", y = "# Municipalities", x = "Region")
+  labs(title = "Regional composition of outlier municipalities (proportion, NUTS 2)", y = "% Municipalities", x = "Region")

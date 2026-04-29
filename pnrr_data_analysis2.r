@@ -172,11 +172,12 @@ macro_regional_split <- pnrr_summarized_nuts %>%
   group_by(NUTS1_Name) %>%
   summarise(total_pnrr = sum(finanziamento_pnrr, na.rm = TRUE)) %>%
   mutate(perc_total = (total_pnrr / sum(total_pnrr)) * 100) %>%
-  arrange(desc(perc_total))
+  arrange(desc(perc_total)) %>% 
+  na.omit()
 
 plot_macro <- ggplot(macro_regional_split, aes(x = reorder(NUTS1_Name, perc_total), y = perc_total)) +
   geom_col(fill = "steelblue") +
-  geom_hline(yintercept = 40, linetype = "dashed", color = "red") +
+  # geom_hline(yintercept = 40, linetype = "dashed", color = "red") +
   coord_flip() +
   labs(title = "PNRR Funding Distribution by Macro-Region",
        x = "Macro-Region (NUTS1)", 
@@ -191,7 +192,8 @@ private_multiplier <- pnrr_summarized_nuts %>%
     total_privato = sum(finanziamento_privato, na.rm = TRUE)
   ) %>%
   mutate(multiplier_ratio = total_privato / total_pnrr) %>%
-  arrange(desc(multiplier_ratio))
+  arrange(desc(multiplier_ratio)) %>% 
+  na.omit()
 
 plot_priv_mult <- ggplot(private_multiplier, aes(x = reorder(NUTS2_Name, multiplier_ratio), y = multiplier_ratio)) +
   geom_col(fill = "forestgreen") +
@@ -209,7 +211,8 @@ local_fiscal_capacity <- pnrr_summarized_nuts %>%
   ) %>%
   group_by(NUTS2_Name) %>%
   summarise(avg_local_capacity = mean(local_dependency_ratio, na.rm = TRUE)) %>%
-  arrange(desc(avg_local_capacity))
+  arrange(desc(avg_local_capacity)) %>% 
+  na.omit()
 
 plot_local_cap <- ggplot(local_fiscal_capacity, aes(x = reorder(NUTS2_Name, avg_local_capacity), y = avg_local_capacity)) +
   geom_col(fill = "darkorange") +
@@ -246,7 +249,8 @@ scale_fragmentation <- pnrr_summarized_nuts %>%
     total_projects = sum(n_projects, na.rm = TRUE)
   ) %>%
   mutate(avg_funding_per_project = total_funding / total_projects) %>%
-  arrange(avg_funding_per_project)
+  arrange(avg_funding_per_project) %>% 
+  na.omit()
 
 top_bottom_scale <- scale_fragmentation %>%
   filter(!is.na(NUTS3_Name)) %>%
@@ -276,7 +280,8 @@ temporal_evolution <- pnrr_summarized_nuts %>%
   mutate(
     perc_pnrr = (total_pnrr / (total_pnrr + total_other)) * 100,
     perc_other = (total_other / (total_pnrr + total_other)) * 100
-  )
+  ) %>% 
+  na.omit()
 
 temporal_long <- temporal_evolution %>%
   select(period, perc_pnrr, perc_other) %>%
